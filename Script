@@ -1,7 +1,7 @@
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local targetPlaceId = 16670640252 -- Hedef oyun ID'si
+local targetPlaceId = 16670640252 -- Farm yapılacak oyun ID'si
 local returnPlaceId = 3231515867 -- Geri dönülecek oyun ID'si
 
 local function deleteBots()
@@ -69,7 +69,7 @@ local function jumpAndStartFarm()
 
     wait(1)
 
-    -- Farm işlemlerini başlat
+    -- Farm yapılacak bölgeler ve bekleme süreleri
     local regions = {
         {name = "E", waitTime = 40},
         {name = "F", waitTime = 40},
@@ -91,15 +91,15 @@ local function jumpAndStartFarm()
         end
     end
 
-    wait(6) -- Bölgeler ele geçirildikten sonra 6 saniye bekle
+    wait(6) -- Farm işlemleri tamamlandıktan sonra bekle
     showNotification("Hedef oyun tamamlandı. Geri dönülüyor...", 3)
-    TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş ışınlaması
+    TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş teleportu
 end
 
 local function onTeleportCompleted()
     showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
     deleteBots()
-    wait(1) -- Botların silinmesi için kısa bir süre bekleyin
+    wait(1) -- Botların silinmesi için kısa bekleme
     jumpAndStartFarm()
 end
 
@@ -113,5 +113,11 @@ local function checkAndTeleport()
     end
 end
 
--- Kontrolü başlat
-checkAndTeleport()
+-- Ana döngü: Bu script hem farm yapılan yerde hem de geri dönüş yapılan yerde
+-- StarterPlayerScripts gibi tüm yerleşimlerde yüklendiğinden, her teleport sonrası script yeniden başlar.
+while true do
+    checkAndTeleport()
+    -- TeleportService:Teleport çağrıldığında oyuncu farklı bir yere geçeceği için, buradaki wait sadece
+    -- teleport gerçekleşmezse devreye girer.
+    wait(5)
+end
