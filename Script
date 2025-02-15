@@ -2,7 +2,8 @@ local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
-local targetPlaceId = 16670640252 -- Hedef oyun ID
+local farmPlaceId = 16670640252 -- Farm yapılacak oyun ID'si
+local returnPlaceId = 3231515867 -- Farm sonrası gidilecek oyun ID'si
 
 local function deleteBots()
     local bots = workspace:FindFirstChild("Botlar")
@@ -69,7 +70,6 @@ local function jumpAndStartFarm()
 
     wait(1)
 
-    -- Farm işlemlerini başlat
     local regions = {
         {name = "B", waitTime = 40},
         {name = "E", waitTime = 40},
@@ -78,8 +78,7 @@ local function jumpAndStartFarm()
         {name = "H", waitTime = 40},
         {name = "C", waitTime = 40},
         {name = "A", waitTime = 40},
-        {name = "D", waitTime = 40},
-        {name = "B", waitTime = 40}
+        {name = "D", waitTime = 40}
     }
 
     for _, region in ipairs(regions) do
@@ -92,28 +91,35 @@ local function jumpAndStartFarm()
         end
     end
 
-    -- Farm tamamlandıktan sonra hedef oyuna yeniden ışınlan
     wait(2)
-    showNotification("Yeni oyuna ışınlanıyorsunuz...", 3)
-    TeleportService:Teleport(targetPlaceId, player)
+    showNotification("Önce bekleme yerine ışınlanıyorsunuz...", 3)
+    TeleportService:Teleport(returnPlaceId, player)
+end
+
+local function onReturnPlaceReached()
+    showNotification("Bekleme yerindesiniz. 7 saniye sonra farma dönülecek.", 3)
+    wait(7)
+    showNotification("Farma geri dönülüyor...", 3)
+    TeleportService:Teleport(farmPlaceId, player)
+end
+
+local function checkAndTeleport()
+    local currentPlaceId = game.PlaceId
+    if currentPlaceId == farmPlaceId then
+        onTeleportCompleted()
+    elseif currentPlaceId == returnPlaceId then
+        onReturnPlaceReached()
+    else
+        showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
+        TeleportService:Teleport(farmPlaceId, player)
+    end
 end
 
 local function onTeleportCompleted()
     showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
     deleteBots()
-    wait(1) -- Botların silinmesi için kısa bir süre bekleyin
+    wait(1)
     jumpAndStartFarm()
 end
 
-local function checkAndTeleport()
-    local currentPlaceId = game.PlaceId
-    if currentPlaceId ~= targetPlaceId then
-        showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
-        TeleportService:Teleport(targetPlaceId, player)
-    else
-        onTeleportCompleted()
-    end
-end
-
--- Kontrolü başlat
 checkAndTeleport()
