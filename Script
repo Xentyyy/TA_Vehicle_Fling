@@ -116,10 +116,13 @@ local function checkAndTeleport()
 end
 
 local function onTeleportCompleted()
-    showNotification("Hedef oyuna teleport esdasdadildiniz. Botlar siliniyor ve farma başlıyor.", 3)
+    showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
     deleteBots()
     wait(1)
     jumpAndStartFarm()
 end
 
-checkAndTeleport()
+while true do
+    checkAndTeleport()
+    wait(5)
+end
