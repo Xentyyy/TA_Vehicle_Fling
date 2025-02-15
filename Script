@@ -1,7 +1,7 @@
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local targetPlaceId = 16670640252 -- Farm yapılacak oyun ID'si
+local targetPlaceId = 16670640252 -- Hedef oyun ID'si
 local returnPlaceId = 3231515867 -- Geri dönülecek oyun ID'si
 
 local function deleteBots()
@@ -69,7 +69,7 @@ local function jumpAndStartFarm()
 
     wait(1)
 
-    -- Farm yapılacak bölgeler ve bekleme süreleri
+    -- Farm işlemlerini başlat
     local regions = {
         {name = "E", waitTime = 40},
         {name = "F", waitTime = 40},
@@ -91,33 +91,53 @@ local function jumpAndStartFarm()
         end
     end
 
-    wait(6) -- Farm işlemleri tamamlandıktan sonra bekle
+    wait(6) -- Bölgeler ele geçirildikten sonra 6 saniye bekle
     showNotification("Hedef oyun tamamlandı. Geri dönülüyor...", 3)
-    TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş teleportu
+    TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş ışınlaması
 end
 
 local function onTeleportCompleted()
-    showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
-    deleteBots()
-    wait(1) -- Botların silinmesi için kısa bekleme
-    jumpAndStartFarm()
-end
-
-local function checkAndTeleport()
+    wait(3) -- Güvenlik için kısa bir bekleme
     local currentPlaceId = game.PlaceId
-    if currentPlaceId ~= targetPlaceId then
-        showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
+
+    if currentPlaceId == targetPlaceId then
+        showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
+        deleteBots()
+        wait(1)
+        jumpAndStartFarm()
+    elseif currentPlaceId == returnPlaceId then
+        showNotification("Ana haritaya geri döndünüz. Tekrar hedefe ışınlanıyor...", 3)
+        wait(2)
         TeleportService:Teleport(targetPlaceId, player)
-    else
-        onTeleportCompleted()
     end
 end
 
--- Ana döngü: Bu script hem farm yapılan yerde hem de geri dönüş yapılan yerde
--- StarterPlayerScripts gibi tüm yerleşimlerde yüklendiğinden, her teleport sonrası script yeniden başlar.
-while true do
-    checkAndTeleport()
-    -- TeleportService:Teleport çağrıldığında oyuncu farklı bir yere geçeceği için, buradaki wait sadece
-    -- teleport gerçekleşmezse devreye girer.
-    wait(5)
+local function checkAndTeleport()
+    while true do
+        wait(5) -- Gereksiz yoğunluğu önlemek için kısa bir bekleme
+        local currentPlaceId = game.PlaceId
+
+        if currentPlaceId == targetPlaceId then
+            onTeleportCompleted()
+        elseif currentPlaceId == returnPlaceId then
+            showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
+            TeleportService:Teleport(targetPlaceId, player)
+        end
+    end
 end
+
+-- Teleport işlemi tamamlandığında çağrılacak event
+TeleportService.TeleportInitFailed:Connect(function(player, teleportResult, errorMessage)
+    warn("Teleport başarısız: " .. errorMessage)
+    showNotification("Teleport başarısız oldu, tekrar deniyoruz...", 3)
+    wait(5)
+    checkAndTeleport() -- Yeniden teleport dene
+end)
+
+player.CharacterAdded:Connect(function()
+    wait(2) -- Karakter tamamen yüklensin
+    checkAndTeleport()
+end)
+
+-- Script başlatma
+checkAndTeleport()
