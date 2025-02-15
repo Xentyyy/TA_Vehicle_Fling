@@ -91,7 +91,7 @@ local function jumpAndStartFarm()
     end
 
     wait(6) -- Bölgeler ele geçirildikten sonra 6 saniye bekle
-    showNotification("Hedef oyun tamamlandı. Geri dönülecek...", 3)
+    showNotification("Hedef oyun tamamlandı. Geri dönülüyor...", 3)
     TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş ışınlaması
 end
 
@@ -100,6 +100,9 @@ local function onTeleportCompleted()
     deleteBots()
     wait(1) -- Botların silinmesi için kısa bir süre bekleyin
     jumpAndStartFarm()
+    
+    -- Geri döndükten sonra tekrar kontrol et
+    checkAndTeleport()
 end
 
 local function checkAndTeleport()
@@ -111,14 +114,6 @@ local function checkAndTeleport()
         onTeleportCompleted()
     end
 end
-
--- Teleport sonrası bir döngü oluşturmak için:
-game:GetService("TeleportService").TeleportFinished:Connect(function(player, placeId)
-    if placeId == returnPlaceId then
-        -- Eğer geri dönülen oyun ID'sine ışınlandıysa, tekrar kontrol et ve farm işlemini başlat
-        checkAndTeleport()
-    end
-end)
 
 -- Kontrolü başlat
 checkAndTeleport()
