@@ -78,7 +78,8 @@ local function jumpAndStartFarm()
         {name = "H", waitTime = 40},
         {name = "C", waitTime = 40},
         {name = "A", waitTime = 40},
-        {name = "D", waitTime = 40}
+        {name = "D", waitTime = 40},
+        {name = "B", waitTime = 40}
     }
 
     for _, region in ipairs(regions) do
