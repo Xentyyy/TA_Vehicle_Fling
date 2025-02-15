@@ -1,11 +1,9 @@
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local targetPlaceId = 16670640252 -- Hedef oyun ID'si
-local returnPlaceId = 3231515867 -- Geri dönülecek oyun ID'si
-local isTeleporting = false -- Teleport durumunu kontrol etmek için
 
--- Botları silme fonksiyonu
+local targetPlaceId = 16670640252 -- Hedef oyun ID
+
 local function deleteBots()
     local bots = workspace:FindFirstChild("Botlar")
     if bots then
@@ -16,7 +14,6 @@ local function deleteBots()
     end
 end
 
--- Belirli bir nesneyi bulma fonksiyonu
 local function getNil(name, class)
     for _, v in next, game:GetDescendants() do
         if v.ClassName == class and v.Name == name then
@@ -25,7 +22,6 @@ local function getNil(name, class)
     end
 end
 
--- Bildirim gösterme fonksiyonu
 local function showNotification(message, duration)
     if game:GetService("UserInputService").TouchEnabled then
         return
@@ -60,7 +56,6 @@ local function showNotification(message, duration)
     notificationGui:Destroy()
 end
 
--- Farm işlemini başlatma fonksiyonu
 local function jumpAndStartFarm()
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoid = character:WaitForChild("Humanoid", 10)
@@ -76,14 +71,14 @@ local function jumpAndStartFarm()
 
     -- Farm işlemlerini başlat
     local regions = {
+        {name = "B", waitTime = 40},
         {name = "E", waitTime = 40},
         {name = "F", waitTime = 40},
         {name = "G", waitTime = 40},
         {name = "H", waitTime = 40},
         {name = "C", waitTime = 40},
         {name = "A", waitTime = 40},
-        {name = "D", waitTime = 40},
-        {name = "B", waitTime = 40}
+        {name = "D", waitTime = 40}
     }
 
     for _, region in ipairs(regions) do
@@ -96,59 +91,28 @@ local function jumpAndStartFarm()
         end
     end
 
-    wait(6) -- Bölgeler ele geçirildikten sonra 6 saniye bekle
-    showNotification("Hedef oyun tamamlandı. Geri dönülüyor...", 3)
-    isTeleporting = true
-    TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş ışınlaması
+    -- Farm tamamlandıktan sonra hedef oyuna yeniden ışınlan
+    wait(2)
+    showNotification("Yeni oyuna ışınlanıyorsunuz...", 3)
+    TeleportService:Teleport(targetPlaceId, player)
 end
 
--- Teleport tamamlandığında çalışacak fonksiyon
 local function onTeleportCompleted()
-    local currentPlaceId = game.PlaceId
-
-    if currentPlaceId == targetPlaceId then
-        showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
-        deleteBots()
-        wait(1)
-        jumpAndStartFarm()
-    elseif currentPlaceId == returnPlaceId then
-        showNotification("Ana haritaya geri döndünüz. Tekrar hedefe ışınlanıyor...", 3)
-        wait(2)
-        isTeleporting = true
-        TeleportService:Teleport(targetPlaceId, player)
-    end
+    showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
+    deleteBots()
+    wait(1) -- Botların silinmesi için kısa bir süre bekleyin
+    jumpAndStartFarm()
 end
 
--- Teleport kontrolü ve döngüyü başlatma
 local function checkAndTeleport()
-    while true do
-        wait(5) -- Gereksiz yoğunluğu önlemek için kısa bir bekleme
-        local currentPlaceId = game.PlaceId
-
-        if currentPlaceId == targetPlaceId then
-            onTeleportCompleted()
-        elseif currentPlaceId == returnPlaceId then
-            showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
-            isTeleporting = true
-            TeleportService:Teleport(targetPlaceId, player)
-        end
+    local currentPlaceId = game.PlaceId
+    if currentPlaceId ~= targetPlaceId then
+        showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
+        TeleportService:Teleport(targetPlaceId, player)
+    else
+        onTeleportCompleted()
     end
 end
 
--- Teleport hatalarını yönetme
-TeleportService.TeleportInitFailed:Connect(function(player, teleportResult, errorMessage)
-    warn("Teleport başarısız: " .. errorMessage)
-    showNotification("Teleport başarısız oldu, tekrar deniyoruz...", 3)
-    isTeleporting = false
-    wait(5)
-    checkAndTeleport() -- Yeniden teleport dene
-end)
-
--- Karakter yüklendiğinde kontrolü başlat
-player.CharacterAdded:Connect(function()
-    wait(2) -- Karakter tamamen yüklensin
-    checkAndTeleport()
-end)
-
--- Script başlatma
+-- Kontrolü başlat
 checkAndTeleport()
