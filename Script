@@ -1,29 +1,19 @@
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
-local targetPlaceId = 16670640252 -- Hedef oyun ID'si
+
+-- Oynadığınız her iki oyundaki ID'ler
+local targetPlaceId = 16670640252 -- Farm yapılacak oyun ID'si
 local returnPlaceId = 3231515867 -- Geri dönülecek oyun ID'si
 
-local function deleteBots()
-    local bots = workspace:FindFirstChild("Botlar")
-    if bots then
-        bots:Destroy()
-        print("Botlar başarıyla silindi.")
-    else
-        print("Botlar bulunamadı.")
-    end
-end
+-- TeleportData üzerinden gönderilen veriyi kontrol et
+local teleportData = TeleportService:GetTeleportData() or {}
+local comingFromFarm = teleportData.fromFarm  -- true ise geri dönüş sonrası farmdan geliniyor
 
-local function getNil(name, class)
-    for _, v in next, game:GetDescendants() do
-        if v.ClassName == class and v.Name == name then
-            return v
-        end
-    end
-end
-
+-- Bildirim gösterme fonksiyonu
 local function showNotification(message, duration)
-    if game:GetService("UserInputService").TouchEnabled then
+    if UserInputService.TouchEnabled then
         return
     end
 
@@ -56,6 +46,27 @@ local function showNotification(message, duration)
     notificationGui:Destroy()
 end
 
+-- Botları silme fonksiyonu
+local function deleteBots()
+    local bots = workspace:FindFirstChild("Botlar")
+    if bots then
+        bots:Destroy()
+        print("Botlar başarıyla silindi.")
+    else
+        print("Botlar bulunamadı.")
+    end
+end
+
+-- İstenilen isme ve sınıfa sahip objeyi bulma fonksiyonu
+local function getNil(name, class)
+    for _, v in next, game:GetDescendants() do
+        if v.ClassName == class and v.Name == name then
+            return v
+        end
+    end
+end
+
+-- Farm işlemlerini başlatan fonksiyon (targetPlaceId içindeki oyunda çalışır)
 local function jumpAndStartFarm()
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoid = character:WaitForChild("Humanoid", 10)
@@ -69,7 +80,7 @@ local function jumpAndStartFarm()
 
     wait(1)
 
-    -- Farm işlemlerini başlat
+    -- Farm yapılacak bölgeler ve bekleme süreleri
     local regions = {
         {name = "E", waitTime = 40},
         {name = "F", waitTime = 40},
@@ -91,53 +102,54 @@ local function jumpAndStartFarm()
         end
     end
 
-    wait(6) -- Bölgeler ele geçirildikten sonra 6 saniye bekle
+    wait(6) -- Farm işlemleri tamamlandıktan sonra bekle
     showNotification("Hedef oyun tamamlandı. Geri dönülüyor...", 3)
-    TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş ışınlaması
+
+    -- Geri dönüş için teleportData içerisine farmdan geldiğimiz bilgisini ekleyelim
+    local teleportDataToSend = {
+        fromFarm = true
+    }
+    TeleportService:Teleport(returnPlaceId, player, teleportDataToSend)
 end
 
+-- Teleport sonrası çalışacak fonksiyon
 local function onTeleportCompleted()
-    wait(3) -- Güvenlik için kısa bir bekleme
-    local currentPlaceId = game.PlaceId
-
-    if currentPlaceId == targetPlaceId then
-        showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
-        deleteBots()
-        wait(1)
-        jumpAndStartFarm()
-    elseif currentPlaceId == returnPlaceId then
-        showNotification("Ana haritaya geri döndünüz. Tekrar hedefe ışınlanıyor...", 3)
-        wait(2)
-        TeleportService:Teleport(targetPlaceId, player)
-    end
+    showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
+    deleteBots()
+    wait(1)
+    jumpAndStartFarm()
 end
 
+-- Oyunun içinde hangi ID'de olduğumuzu kontrol edip gerekli adımı atan fonksiyon
 local function checkAndTeleport()
-    while true do
-        wait(5) -- Gereksiz yoğunluğu önlemek için kısa bir bekleme
-        local currentPlaceId = game.PlaceId
-
-        if currentPlaceId == targetPlaceId then
-            onTeleportCompleted()
-        elseif currentPlaceId == returnPlaceId then
-            showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
-            TeleportService:Teleport(targetPlaceId, player)
-        end
+    local currentPlaceId = game.PlaceId
+    -- Eğer şu an farm yapılacak oyunda değilsek, farm oyununa geçelim
+    if currentPlaceId ~= targetPlaceId then
+        showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
+        -- Geri dönüşte farm işlemlerine başlamamız gerektiğini belirtmek için teleportData ekleyelim
+        local teleportDataToSend = {
+            fromFarm = false
+        }
+        TeleportService:Teleport(targetPlaceId, player, teleportDataToSend)
+    else
+        onTeleportCompleted()
     end
 end
 
--- Teleport işlemi tamamlandığında çağrılacak event
-TeleportService.TeleportInitFailed:Connect(function(player, teleportResult, errorMessage)
-    warn("Teleport başarısız: " .. errorMessage)
-    showNotification("Teleport başarısız oldu, tekrar deniyoruz...", 3)
-    wait(5)
-    checkAndTeleport() -- Yeniden teleport dene
-end)
-
-player.CharacterAdded:Connect(function()
-    wait(2) -- Karakter tamamen yüklensin
+-- Ana mantık:  
+-- Eğer geri dönüş oyunundan geliniyorsa, checkAndTeleport çağrılır ve farm oyununa geçiş sağlanır.
+-- Eğer doğrudan farm oyunundaysak, farm işlemleri başlar.
+if game.PlaceId == targetPlaceId then
+    -- Eğer TeleportData'da farmdan gelip gelmediği bilgisi varsa,
+    -- bu genellikle Teleport sonrası otomatik olarak yeniden çalıştığı için onTeleportCompleted() yeterli.
+    if comingFromFarm then
+        -- Geri dönüş oyunundan geldiysek, direkt farm işlemlerini başlatıyoruz.
+        onTeleportCompleted()
+    else
+        -- İlk sefer veya teleportData'da farmdan gelmediğine dair veri yoksa da farm işlemleri başlatılır.
+        onTeleportCompleted()
+    end
+else
+    -- Eğer şu an geri dönüş oyununda isek, farm oyununa geçmek için checkAndTeleport çağrılır.
     checkAndTeleport()
-end)
-
--- Script başlatma
-checkAndTeleport()
+end
