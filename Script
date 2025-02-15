@@ -103,23 +103,28 @@ local function onReturnPlaceReached()
     TeleportService:Teleport(farmPlaceId, player)
 end
 
-local function checkAndTeleport()
-    local currentPlaceId = game.PlaceId
-    if currentPlaceId == farmPlaceId then
-        onTeleportCompleted()
-    elseif currentPlaceId == returnPlaceId then
-        onReturnPlaceReached()
-    else
-        showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
-        TeleportService:Teleport(farmPlaceId, player)
-    end
-end
-
 local function onTeleportCompleted()
     showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
+    print("onTeleportCompleted fonksiyonu çalıştırıldı!")
     deleteBots()
     wait(1)
     jumpAndStartFarm()
+end
+
+local function checkAndTeleport()
+    local currentPlaceId = game.PlaceId
+    print("Şu anki oyun ID'si:", currentPlaceId)
+    if currentPlaceId == farmPlaceId then
+        print("Farm oyununda bulunuyorsunuz, farma başlanıyor...")
+        onTeleportCompleted()
+    elseif currentPlaceId == returnPlaceId then
+        print("Bekleme yerindesiniz, 7 saniye sonra geri döneceksiniz...")
+        onReturnPlaceReached()
+    else
+        print("Bilinmeyen bir yerde bulunuyorsunuz, farma yönlendiriliyorsunuz...")
+        showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
+        TeleportService:Teleport(farmPlaceId, player)
+    end
 end
 
 while true do
