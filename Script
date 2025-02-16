@@ -4,18 +4,6 @@ local player = Players.LocalPlayer
 local targetPlaceId = 16670640252 -- Hedef oyun ID'si
 local returnPlaceId = 3231515867 -- Geri dönülecek oyun ID'si
 
--- Sürekli teleport kontrolü yapan bir fonksiyon
-local function keepTeleporting()
-    while true do
-        wait(5) -- 5 saniyede bir kontrol et
-        if game.PlaceId ~= targetPlaceId then
-            TeleportService:Teleport(targetPlaceId, player)
-        end
-    end
-end
-
-spawn(keepTeleporting) -- Teleport kontrolünü başlat
-
 local function deleteBots()
     local bots = workspace:FindFirstChild("Botlar")
     if bots then
@@ -81,6 +69,7 @@ local function jumpAndStartFarm()
 
     wait(1)
 
+    -- Farm işlemlerini başlat
     local regions = {
         {name = "E", waitTime = 40},
         {name = "F", waitTime = 40},
@@ -88,8 +77,7 @@ local function jumpAndStartFarm()
         {name = "H", waitTime = 40},
         {name = "C", waitTime = 40},
         {name = "A", waitTime = 40},
-        {name = "D", waitTime = 40},
-        {name = "B", waitTime = 40} -- B bölgesi eklendi
+        {name = "D", waitTime = 40}
     }
 
     for _, region in ipairs(regions) do
@@ -102,20 +90,27 @@ local function jumpAndStartFarm()
         end
     end
 
-    wait(6) -- Bölgeler tamamlandıktan sonra bekleme süresi
+    wait(6) -- Bölgeler ele geçirildikten sonra 6 saniye bekle
+    showNotification("Hedef oyun tamamlandı. Geri dönülüyor...", 3)
     TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş ışınlaması
-    
-    wait(6) -- Geri döndükten sonra tekrar hedef oyuna geçiş
-    TeleportService:Teleport(targetPlaceId, player)
 end
 
 local function onTeleportCompleted()
-    showNotification("Hedef oyuna teleport esdadildiniz. Botlar siliniyor ve farma başlıyor.", 3)
+    showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
     deleteBots()
-    wait(1)
+    wait(1) -- Botların silinmesi için kısa bir süre bekleyin
     jumpAndStartFarm()
 end
 
-if game.PlaceId == targetPlaceId then
-    onTeleportCompleted()
+local function checkAndTeleport()
+    local currentPlaceId = game.PlaceId
+    if currentPlaceId ~= targetPlaceId then
+        showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
+        TeleportService:Teleport(targetPlaceId, player)
+    else
+        onTeleportCompleted()
+    end
 end
+
+-- Kontrolü başlat
+checkAndTeleport()
