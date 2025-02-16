@@ -2,6 +2,7 @@ local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local targetPlaceId = 16670640252 -- Hedef oyun ID'si
+local returnPlaceId = 3231515867 -- Geri dönülecek oyun ID'si
 
 -- Sürekli teleport kontrolü yapan bir fonksiyon
 local function keepTeleporting()
@@ -87,8 +88,8 @@ local function jumpAndStartFarm()
         {name = "H", waitTime = 40},
         {name = "C", waitTime = 40},
         {name = "A", waitTime = 40},
-        {name = "B", waitTime = 40},
-        {name = "D", waitTime = 40}
+        {name = "D", waitTime = 40},
+        {name = "B", waitTime = 40} -- B bölgesi eklendi
     }
 
     for _, region in ipairs(regions) do
@@ -100,10 +101,16 @@ local function jumpAndStartFarm()
             print(region.name .. " bölgesi bulunamadı veya HumanoidRootPart yok.")
         end
     end
+
+    wait(6) -- Bölgeler tamamlandıktan sonra bekleme süresi
+    TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş ışınlaması
+    
+    wait(6) -- Geri döndükten sonra tekrar hedef oyuna geçiş
+    TeleportService:Teleport(targetPlaceId, player)
 end
 
 local function onTeleportCompleted()
-    showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
+    showNotification("Hedef oyuna teleport esdadildiniz. Botlar siliniyor ve farma başlıyor.", 3)
     deleteBots()
     wait(1)
     jumpAndStartFarm()
