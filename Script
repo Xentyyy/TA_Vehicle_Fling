@@ -1,8 +1,8 @@
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local targetPlaceId = 16670640252 -- Hedef oyun ID'si
-local returnPlaceId = 3231515867 -- Geri dönülecek oyun ID'si
+local targetPlaceId = 16670640252 -- Hedef oyun ID'si (B oyunu)
+local returnPlaceId = 3231515867 -- Geri dönülecek oyun ID'si (A oyunu)
 
 local function deleteBots()
     local bots = workspace:FindFirstChild("Botlar")
@@ -77,6 +77,7 @@ local function jumpAndStartFarm()
         {name = "H", waitTime = 40},
         {name = "C", waitTime = 40},
         {name = "A", waitTime = 40},
+        {name = "B", waitTime = 40}, 
         {name = "D", waitTime = 40}
     }
 
@@ -91,8 +92,8 @@ local function jumpAndStartFarm()
     end
 
     wait(6) -- Bölgeler ele geçirildikten sonra 6 saniye bekle
-    showNotification("Hedef oyun tamamlandı. Geri dönülüyor...", 3)
-    TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş ışınlaması
+    showNotification("Farm tamamlandı. Geri dönülüyor...", 3)
+    TeleportService:Teleport(returnPlaceId, player) -- A oyununa geri dönüş
 end
 
 local function onTeleportCompleted()
@@ -112,5 +113,13 @@ local function checkAndTeleport()
     end
 end
 
+-- Sonsuz döngü başlatmak için bir fonksiyon
+local function startFarmLoop()
+    while true do
+        checkAndTeleport()  -- İlk olarak hedef oyuna ışınlan
+        wait(5) -- Birkaç saniye bekle (Bye geçiş süreleri)
+    end
+end
+
 -- Kontrolü başlat
-checkAndTeleport()
+startFarmLoop()
