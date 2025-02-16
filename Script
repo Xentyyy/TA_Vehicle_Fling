@@ -4,7 +4,6 @@ local player = Players.LocalPlayer
 local targetPlaceId = 16670640252 -- Hedef oyun ID'si
 local returnPlaceId = 3231515867 -- Geri dönülecek oyun ID'si
 
--- Botları silme fonksiyonu
 local function deleteBots()
     local bots = workspace:FindFirstChild("Botlar")
     if bots then
@@ -15,7 +14,6 @@ local function deleteBots()
     end
 end
 
--- Belirli bir nesneyi bulma fonksiyonu
 local function getNil(name, class)
     for _, v in next, game:GetDescendants() do
         if v.ClassName == class and v.Name == name then
@@ -24,7 +22,6 @@ local function getNil(name, class)
     end
 end
 
--- Bildirim gösterme fonksiyonu
 local function showNotification(message, duration)
     if game:GetService("UserInputService").TouchEnabled then
         return
@@ -59,7 +56,6 @@ local function showNotification(message, duration)
     notificationGui:Destroy()
 end
 
--- Farm işlemini başlatma fonksiyonu
 local function jumpAndStartFarm()
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoid = character:WaitForChild("Humanoid", 10)
@@ -81,8 +77,7 @@ local function jumpAndStartFarm()
         {name = "H", waitTime = 40},
         {name = "C", waitTime = 40},
         {name = "A", waitTime = 40},
-        {name = "D", waitTime = 40},
-        {name = "B", waitTime = 40}
+        {name = "D", waitTime = 40}
     }
 
     for _, region in ipairs(regions) do
@@ -97,22 +92,9 @@ local function jumpAndStartFarm()
 
     wait(6) -- Bölgeler ele geçirildikten sonra 6 saniye bekle
     showNotification("Hedef oyun tamamlandı. Geri dönülüyor...", 3)
-    safeTeleport(returnPlaceId) -- Geri dönüş ışınlaması
+    TeleportService:Teleport(returnPlaceId, player) -- Geri dönüş ışınlaması
 end
 
--- Güvenli teleport fonksiyonu
-local function safeTeleport(placeId)
-    local success, errorMessage = pcall(function()
-        TeleportService:Teleport(placeId, player)
-    end)
-    if not success then
-        warn("Teleport başarısız oldu: " .. errorMessage)
-        wait(10) -- 10 saniye bekleyip tekrar dene
-        safeTeleport(placeId)
-    end
-end
-
--- Teleport tamamlandığında çalışacak fonksiyon
 local function onTeleportCompleted()
     showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
     deleteBots()
@@ -120,27 +102,26 @@ local function onTeleportCompleted()
     jumpAndStartFarm()
 end
 
--- Teleport işlemi başladığında çağrılacak fonksiyon
-local function onTeleportInitiated()
-    showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
-    safeTeleport(targetPlaceId)
-end
-
--- Scriptin ana döngüsü
-local function main()
+local function checkAndTeleport()
     local currentPlaceId = game.PlaceId
-    if currentPlaceId == targetPlaceId then
-        onTeleportCompleted()
+    if currentPlaceId ~= targetPlaceId then
+        showNotification("Hedef oyun ID'sine ışınlanıyorsunuz.", 3)
+        TeleportService:Teleport(targetPlaceId, player)
     else
-        onTeleportInitiated()
+        onTeleportCompleted()
     end
 end
 
--- Scripti başlat
-main()
+-- Eğer oyuncu geri dönüş oyununda ise, karakterin tamamen yüklendiğinden emin olduktan sonra işlemi yeniden başlatıyoruz.
+local function waitForCharacterAndRestart()
+    local character = player.Character or player.CharacterAdded:Wait()
+    wait(6) -- Karakterin tamamen yüklenmesi için ekstra bekleme süresi
+    checkAndTeleport()
+end
 
--- Geri döndükten sonra scriptin tekrar başlaması için
-TeleportService.TeleportCallback = function()
-    wait(5) -- Geri döndükten sonra 5 saniye bekle
-    main() -- Scripti yeniden başlat
+-- Başlangıçta hangi oyun alanında olduğumuzu kontrol ediyoruz
+if game.PlaceId == returnPlaceId then
+    waitForCharacterAndRestart()
+else
+    checkAndTeleport()
 end
