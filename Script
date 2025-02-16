@@ -77,8 +77,7 @@ local function jumpAndStartFarm()
         {name = "H", waitTime = 40},
         {name = "C", waitTime = 40},
         {name = "A", waitTime = 40},
-        {name = "D", waitTime = 40},
-        {name = "B", waitTime = 40}  -- B bölgesini 40 saniye olarak ekledik
+        {name = "D", waitTime = 40}
     }
 
     for _, region in ipairs(regions) do
@@ -97,7 +96,7 @@ local function jumpAndStartFarm()
 end
 
 local function onTeleportCompleted()
-    showNotification("Hedef oyuna teleport esddildiniz. Botlar siliniyor ve farma başlıyor.", 3)
+    showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
     deleteBots()
     wait(1) -- Botların silinmesi için kısa bir süre bekleyin
     jumpAndStartFarm()
@@ -115,21 +114,3 @@ end
 
 -- Kontrolü başlat
 checkAndTeleport()
-
--- Oyun A'dan B'ye geçiş sonrası, B'den A'ya geri dönerken tekrar kontrol ekleyelim
-TeleportService.Teleporting:Connect(function()
-    -- Burası oyun A'dan B'ye geçişte çalışacak
-    local currentPlaceId = game.PlaceId
-    if currentPlaceId == returnPlaceId then
-        -- Geri dönüşte A'ya ışınlanıyorsak, tekrar kontrol yap
-        checkAndTeleport()
-    end
-end)
-
-TeleportService.TeleportRequest:Connect(function()
-    -- Oyun geçişi yapılmadan önce de kontrol yapalım
-    local currentPlaceId = game.PlaceId
-    if currentPlaceId == returnPlaceId then
-        checkAndTeleport()
-    end
-end)
