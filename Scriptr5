@@ -93,13 +93,13 @@ local function jumpAndStartFarm()
 
     wait(6) -- Bölgeler ele geçirildikten sonra 6 saniye bekle
     showNotification("Farm tamamlandı. Geri dönülüyor...", 3)
-    TeleportService:Teleport(returnPlaceId, player) -- A oyununa geri dönüş
+    TeleportService:Teleport(returnPlaceId, player) 
 end
 
 local function onTeleportCompleted()
     showNotification("Hedef oyuna teleport edildiniz. Botlar siliniyor ve farma başlıyor.", 3)
     deleteBots()
-    wait(1) -- Botların silinmesi için kısa bir süre bekleyin
+    wait(1) 
     jumpAndStartFarm()
 end
 
@@ -116,8 +116,8 @@ end
 
 local function startFarmLoop()
     while true do
-        checkAndTeleport()  -- İlk olarak hedef oyuna ışınlan
-        wait(5) -- Birkaç saniye bekle (Bye geçiş süreleri)
+        checkAndTeleport()  
+        wait(5)
     end
 end
 
